@@ -1,5 +1,5 @@
 # Локальный запуск: docker compose up --build
-# Панель: http://localhost:8080
+# Панель: https://localhost:10000
 
 services:
   panel:
@@ -7,10 +7,34 @@ services:
       context: .
       dockerfile: Dockerfile
     restart: unless-stopped
-    ports:
-      - "${PANEL_PORT:-8080}:80"
+    expose:
+      - "80"
+    networks:
+      - evilfox
     healthcheck:
       test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/healthz"]
       interval: 30s
       timeout: 3s
       retries: 3
+
+  caddy:
+    build:
+      context: ./caddy
+    restart: unless-stopped
+    depends_on:
+      panel:
+        condition: service_healthy
+    ports:
+      - "10000:10000"
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - evilfox
+
+networks:
+  evilfox:
+
+volumes:
+  caddy_data:
+  caddy_config:

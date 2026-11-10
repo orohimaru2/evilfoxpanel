@@ -1,5 +1,6 @@
-# Локальный запуск: docker compose up --build
-# Панель: https://localhost:10000
+# Локально без домена: TLS_MODE=internal, панель https://localhost:10000
+# Сервер с доменом: TLS_MODE=letsencrypt в .env, панель https://домен:10000
+# Порт 80 нужен Let's Encrypt для проверки домена. Сама панель слушает 10000.
 
 services:
   panel:
@@ -24,7 +25,12 @@ services:
     depends_on:
       panel:
         condition: service_healthy
+    environment:
+      TLS_MODE: ${TLS_MODE:-internal}
+      PANEL_DOMAIN: ${PANEL_DOMAIN:-}
+      ACME_EMAIL: ${ACME_EMAIL:-}
     ports:
+      - "80:80"
       - "10000:10000"
     volumes:
       - caddy_data:/data

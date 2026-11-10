@@ -1,8 +1,9 @@
-# Dokploy → Compose. Публичный адрес панели: https://<сервер>:10000
-# Caddy сам выпускает сертификат. Домен во вкладке Domains не нужен:
-# Traefik говорит с контейнером по HTTP и сломает уже включённый TLS.
+# Dokploy → Compose. Публичный адрес: https://<домен>:10000
+# Let's Encrypt проверяет домен по порту 80. Этот порт должен достаться Caddy.
+# Если 80 уже занят Traefik Dokploy, выпуск сертификата не состоится.
+# Домен во вкладке Domains не добавляй: Traefik ходит в контейнер по HTTP
+# и ломает TLS, который завершает Caddy.
 # container_name намеренно нет — иначе Dokploy теряет логи и метрики.
-# В файрволе открой TCP 10000.
 
 services:
   panel:
@@ -27,7 +28,12 @@ services:
     depends_on:
       panel:
         condition: service_healthy
+    environment:
+      TLS_MODE: ${TLS_MODE:-letsencrypt}
+      PANEL_DOMAIN: ${PANEL_DOMAIN:-}
+      ACME_EMAIL: ${ACME_EMAIL:-}
     ports:
+      - "80:80"
       - "10000:10000"
     volumes:
       - caddy_data:/data
